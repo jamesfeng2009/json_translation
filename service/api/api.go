@@ -11,6 +11,7 @@ import (
 	"json_trans_api/service/api/user/plan"
 	"json_trans_api/service/api/user/usage"
 	"json_trans_api/service/api/user/webhook"
+	"json_trans_api/service/api/user/stripe"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -70,7 +71,21 @@ func Run() {
 
 		// 订阅计划相关api
 		r.Get("/current_plan", plan.CurrentPlan)
+		
+		// Stripe支付相关API
+		r.Route("/billing", func(r chi.Router) {
+			r.Get("/plans", stripe.GetPlans)
+			r.Post("/checkout", stripe.CreateCheckoutSession)
+			r.Get("/subscription", stripe.GetCurrentSubscription)
+			r.Post("/subscription/cancel", stripe.CancelSubscription)
+			r.Post("/subscription/update", stripe.UpdateSubscription)
+			r.Get("/payment-methods", stripe.GetPaymentMethods)
+			r.Get("/invoices", stripe.GetInvoices)
+		})
 	})
+	
+	// Stripe Webhook处理
+	r.Post("/webhook/stripe", stripe.HandleWebhook)
 
 	http.ListenAndServe(":3001", r)
 }
@@ -78,6 +93,7 @@ func Run() {
 func V1JsonRoute() *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(auth.AuthApiKey())
+	router.Use(quota.CheckQuota()) // 添加配额检查中间件
 
 	// 批量翻译请求[mvp 不开放批量功能]
 	// router.Post("/batch", json.CreateBatch)

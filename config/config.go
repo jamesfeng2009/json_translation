@@ -70,6 +70,14 @@ type LogConfig struct {
 	Output string `yaml:"output"`
 }
 
+// Config 配置结构体
+type Config struct {
+	// 配额设置
+	Quota struct {
+		FreeCharacterLimit int `mapstructure:"free_character_limit"` // 免费用户的字符限制
+	} `mapstructure:"quota"`
+}
+
 func init() {
 	file, err := os.Open("config.yml")
 	if err != nil {
